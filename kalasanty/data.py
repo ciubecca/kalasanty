@@ -46,9 +46,9 @@ def _pdbbind_paths(data_path, idx):
     return ('%s/%s/%s_ligand.mol2' % (data_path, idx, idx),
             '%s/%s/%s_protein.mol2' % (data_path, idx, idx))
 
-def _pdbbind2_paths(data_path, idx):
-    return ('%s/%s/%s_ligand.mol2' % (data_path, idx, idx),
-            '%s/%s/%s_protein.pdb' % (data_path, idx, idx))
+def _pdbbind2_paths(src_data_path, dest_data_path, idx):
+    return ('%s/%s/%s_ligand.mol2' % (src_data_path, idx, idx),
+            '%s/%s/%s_selected.pdb' % (dest_data_path, idx, idx))
 
 def _scpdb_paths(data_path, idx):
     return ('%s/%s/cavity6.mol2' % (data_path, idx),
@@ -65,17 +65,19 @@ def _get_binary_features(mol):
     return coords, features
 
 
-def prepare_dataset(data_path, protein_featurizer, pocket_featurizer=None,
+def prepare_dataset(src_data_path, dest_data_path, protein_featurizer, pocket_featurizer=None,
                     ids=None, hdf_path='pockets.hdf', hdf_mode='w',
                     progress_bar=None, db_format='scpdb', verbose=False):
     """Compute features for proteins and pockets and save results in HDF file.
 
     Parameters
     ----------
-    data_path : str
-        Path to the directory with structures. For now only mol2 format is
+    src_data_path : str
+        Path to the original directory with structures. For now only mol2 format is
         supported. The directory should be organized as PDBbind or sc-PDB database
         (see `db_format`):
+    dest_data_path : str
+        Path to the processed directory with structures.
     protein_featurizer, pocket_featurizer: tfbio.data.Featurizer objects
         Featurizers to prepare protein and pocket. If pocket_featurizer is not
         specified, single binary presence/absence feature will be used.
@@ -143,15 +145,16 @@ def prepare_dataset(data_path, protein_featurizer, pocket_featurizer=None,
 
     # TODO: save feature names in metadata
     # TODO: allow other mol formats
-    data_path = os.path.abspath(data_path)
+    src_data_path = os.path.abspath(src_data_path)
+    dest_data_path = os.path.abspath(dest_data_path)
     if ids is None:
-        ids = os.listdir(data_path)
+        ids = os.listdir(dest_data_path)
 
     multiple_pockets = {}
 
     with h5py.File(hdf_path, mode=hdf_mode) as f:
         for structure_id in progress_bar(ids):
-            pocket_path, protein_path = get_paths(data_path, structure_id)
+            pocket_path, protein_path = get_paths(src_data_path, dest_data_path, structure_id)
             pocket = next(pybel.readfile('mol2', pocket_path))
             # protein = next(pybel.readfile('mol2', protein_path))
             extension = protein_path.split('.')[-1]

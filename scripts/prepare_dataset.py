@@ -32,8 +32,10 @@ def output_path(path):
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--dataset', '-d', required=True, type=input_path,
-                        help='path to the database')
+    parser.add_argument('--srcDataset', '-s', required=True, type=input_path,
+                        help='path to the source database')
+    parser.add_argument('--destDataset', '-d', required=True, type=input_path,
+                        help='path to the processed database')
     parser.add_argument('--include', '-i', type=input_path, nargs='*',
                         help='text file with IDs to use (each in separate line). '
                              'If not specified, all proteins in the database '
@@ -74,7 +76,7 @@ def main():
             with open(fname) as f:
                 all_ids += list(filter(None, f.read().split('\n')))
     else:
-        all_ids = os.listdir(args.dataset)
+        all_ids = os.listdir(args.destDataset)
 
     ids = [i for i in all_ids if i not in blacklist]
     if len(ids) == 0:
@@ -89,7 +91,7 @@ def main():
     else:
         progress_bar = None
 
-    prepare_dataset(args.dataset, protein_featurizer, ids=ids, db_format=args.db_format,
+    prepare_dataset(args.srcDataset, args.destDataset, protein_featurizer, ids=ids, db_format=args.db_format,
                     hdf_path=args.output, hdf_mode=args.mode,
                     progress_bar=progress_bar,  verbose=args.verbose)
 
