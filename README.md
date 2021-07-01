@@ -3,6 +3,8 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gl/cheminfIBB%2Fkalasanty/master)
 
 
+**NOTE** This is a fork of  https://gitlab.com/cheminfIBB/kalasanty
+
 **Kalasanty** is a 3D convolutional neural network that predicts binding sites on protein surface.
 It was developed in [keras](https://keras.io/) and trained on the [sc-PDB](https://academic.oup.com/nar/article/43/D1/D399/2439494) database.
 
