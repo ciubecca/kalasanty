@@ -1,6 +1,5 @@
 import argparse
 import os
-import re
 import sys
 import time
 import yaml
@@ -8,16 +7,12 @@ from pathlib import  Path
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 
-
 from pybel import readfile
 from kalasanty.net import UNet
 from tfbio.data import Featurizer
 
-from tqdm import tqdm
-
 root_dir = os.path.dirname(os.path.dirname(__file__))
 model_path = os.path.join(root_dir, 'data', 'model_scpdb2017.hdf')
-
 
 def input_path(path):
     """Check if input exists."""
@@ -100,18 +95,25 @@ def main():
                             featurizer=Featurizer(save_molecule_codes=False))
 
     for test_id in test_ids:
+        output = Path(args.output) / test_id
+        os.makedirs(output, exist_ok=True)
 
         path = str(Path(destData) / test_id / f"{test_id}_selected.pdb")
         mol = next(readfile(args.format, path))
 
+        pdb_fname = os.path.join(output, 'pocket_pred.pdb')
         # predict pockets and save them as separate mol2 files
         pockets = model.predict_pocket_atoms(mol)
-        for i, pocket in enumerate(pockets):
-            pocket.write('pdb', os.path.join(args.output, f'{test_id}_predictions.pdb'), overwrite=True)
 
-        # save pocket probability as density map (UCSF Chimera format)
-        density, origin, step = model.pocket_density_from_mol(mol)
-        model.save_density_as_cmap(density, origin, step, fname=os.path.join(args.output, 'pockets.cmap'))
+        if len(pockets)==0:
+            open(f'{pdb_fname}.empty', 'a').close()
+        else:
+            for i, pocket in enumerate(pockets):
+                pocket.write('pdb', pdb_fname, overwrite=True)
+
+            # save pocket probability as density map (UCSF Chimera format)
+            density, origin, step = model.pocket_density_from_mol(mol)
+            model.save_density_as_cmap(density, origin, step, fname=os.path.join(output, 'pockets.cmap'))
 
 
 if __name__ == '__main__':
